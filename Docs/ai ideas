@@ -1,0 +1,17 @@
+Adaptive AI:
+    Must become better the more games it plays.
+        AI knowledge file: create, load, and update statistics
+            Knowledge (statistics): 
+                Game: What prizes are more likely to lead to winning (sum to the highest score)
+                Opponent Plays: What cards do they "usually" play in different scenarios (high prizes, low prizes, negative prizes)
+                Opponent Cards: Keep track of what cards everyone have already played (what cards they have left)
+                                ie. if the opponent(s) have 'some' higher cards than you, play your lowest
+                                when there is a high prize, because you are bound to lose anyways. saveCardsTurn()
+                                ie. ai = [11k, 2k, 4k] p1 = [14k, 8k, 15k] prize = 6mil
+                                ie. in this scenario, p1 will probably play 14k or 15k, so play 2k
+                                if you know that other cards exist that will lead you to winning
+                                ie. next turn: ai = [11k, 4k] p1 = [8k, 15k] prize = 10mil
+                                ie. next turn: ai = [11k] p1 = [8k] prize = 5mil -- you will win this turn
+                Future Prizes: Check if the current prize is better than the next ones
+                Scores: Base choice on current scores. (If losing: acquire more high prizes. Else: save high cards)
+                

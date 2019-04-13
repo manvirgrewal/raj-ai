@@ -1,0 +1,18 @@
+Raj Rules:
+
+"Game-board":
+  10 'Prizes', range(1 - 10)
+  15 'Money Cards', range(-5 - 10) x NumOfPlayers
+
+Rules:
+  Each turn:
+    1. a prize is revealed
+    2. each player bids with one 'Money Card'
+    3. bids are revealed to all players
+    4. highest bid receive positive prize  and lowest bid receives negative prize
+    5. two or more of the same bids cancel out
+    6. if all bids cancel out, the prize is added to the next turn
+
+Winner:
+  Whomever has the highest 'prize' score at the end wins
+

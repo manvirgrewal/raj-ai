@@ -1,0 +1,53 @@
+{
+  "name": "javascript-raj",
+  "version": "1.0.0",
+  "description": "artificial intelligence for raj the bidding game",
+  "main": "runGame.js",
+  "dependencies": {
+    "@haensl/subset-sum": "^2.0.0",
+    "array-almost-equal": "^1.0.0",
+    "array2d": "^0.0.5",
+    "chalk": "^2.4.2",
+    "circular-json-es6": "^2.0.2",
+    "electron": "^4.1.1",
+    "fuzzy-equal": "^1.0.1",
+    "jQuery": "^1.7.4",
+    "jsesc": "^2.5.2",
+    "jshint": "^2.10.2",
+    "jsonfile": "^5.0.0",
+    "lodash": "^4.17.11",
+    "map-utility-functions": "^0.1.0",
+    "readline-sync": "^1.4.9",
+    "string-similarity": "^3.0.0",
+    "stringify-json": "^2.0.0",
+    "stringify-object": "^3.3.0",
+    "sync": "^0.2.5",
+    "vue": "^2.6.10"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MrAliveAgain/rajTheBiddingGame_artificialIntelligence.git"
+  },
+  "keywords": [
+    "raj",
+    "the",
+    "bidding",
+    "game",
+    "adapative",
+    "artificial",
+    "intelligence",
+    "javascript",
+    "node.js",
+    "vue.js"
+  ],
+  "author": "Manvir Grewal",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MrAliveAgain/rajTheBiddingGame_artificialIntelligence/issues"
+  },
+  "homepage": "https://github.com/MrAliveAgain/rajTheBiddingGame_artificialIntelligence#readme"
+}
