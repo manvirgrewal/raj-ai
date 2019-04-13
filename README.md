@@ -1,2 +1,3 @@
-# rajTheBiddingGame_artificialIntelligence
-An adaptive a.i for Raj The Bidding Game Aka Stupide Vautour 
+# raj-ai
+An adaptive artificial intelligence for Raj The Bidding Game aka Stupide Vautour.
+Javascript - Node.js 
