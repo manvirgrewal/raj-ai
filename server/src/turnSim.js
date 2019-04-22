@@ -10,8 +10,8 @@ class turnSim{
     this.turnNum = turnNum;
     this.turnPrize = null;
       this.allTurnPrizes = currPrizes || [];
-      this.rollOverPrizesValue = 0; 
-      this.totalTurnPrize = 0; 
+      this.rollOverPrizesValue = 0;
+      this.totalTurnPrize = 0;
     this.turnWinner = null;
 
     this.simType = simType; //diff simType == diff turnChoose
@@ -28,11 +28,11 @@ class turnSim{
     this.turnChoose();
     this.turnWin();
   }
-  
+
   //only ever for the first turn of any game
   //so currPrizes can only have one prize [0]
   skipDrawTurn(){
-    this.turnPrize = this.game.state.turn.turnPrize; 
+    this.turnPrize = this.game.state.turn.turnPrize;
     this.totalTurnPrize += this.turnPrize.getValue();
     this.turnChoose();
     this.turnWin();
@@ -90,7 +90,7 @@ class turnSim{
         }
       }
     }
-    
+
   }
 
   chooseRandomly(player){
@@ -137,12 +137,12 @@ class turnSim{
       for(let prize of this.allTurnPrizes){
         this.game.rollOverPrizes.push(prize);
       }
-      this.allTurnPrizes = []; //reset turn prizes 
+      this.allTurnPrizes = []; //reset turn prizes
     }else{
       //console.log("Simulated turn winner: " + this.turnWinner.getName());
       this.turnWinner.currScore += this.totalTurnPrize;
       this.game.rollOverPrizes = []; //reset rollOverPrizes after they are won
-      this.allTurnPrizes = []; //reset turn prizes 
+      this.allTurnPrizes = []; //reset turn prizes
     }
     //return this.turnWinner;
   }

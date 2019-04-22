@@ -3,7 +3,7 @@
 class opponent{
 
     constructor(name, pMoves, pScores, pHands, pPrizes, pPlayers, pResponses, pTotalPrizes){
-        //heuristic data 
+        //heuristic data
         this.name = name;
         this.pMoves = pMoves;
         this.pScores = pScores;
@@ -18,9 +18,9 @@ class opponent{
         this.currScore = 0;
 
         //other relevant stats
-        this.totalPrize = 0; 
+        this.totalPrize = 0;
 
-        //fuzzy data 
+        //fuzzy data
         this.likelyMoves = [];
         this.closestPastScore = 0;
         this.closestHand = [];

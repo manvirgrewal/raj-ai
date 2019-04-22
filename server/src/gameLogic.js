@@ -16,28 +16,28 @@ const playersFile = './players.json';
 class Game{
 
   constructor(){
-    //default game attribs 
-    this.playerList = []; //empty player list 
+    //default game attribs
+    this.playerList = []; //empty player list
     this.prizes = new Deck().createPrizeDeck(); //default prize deck
     this.winner = null; //no winner
     this.rollOverPrizes = []; //keeps track of rolled over prizes from past turns
     this.playerModels = new Map();
-    
-    this.fileNotEmpty = false; 
+
+    this.fileNotEmpty = false;
     //Load Models
     if(typeof modelsFile.loadPlayerModels == 'function'){
       console.log("Existing Player Model(s) loaded!");
       let tempModels = modelsFile.loadPlayerModels();
       this.playerModels = this.reAssignAllProto(tempModels);
-      this.fileNotEmpty = true; 
+      this.fileNotEmpty = true;
     }
   }
 
   reAssignAllProto(playerModelsMap){
     playerModelsMap.forEach(this.reAssignProto);
-    return playerModelsMap; 
+    return playerModelsMap;
   }
- 
+
   reAssignProto(playerModel, playerName, models){
     //playerModel.prototype = Object.create(pModel.prototype);
     //playerModel.prototype.constructor = pModel;
@@ -60,7 +60,7 @@ class Game{
         console.log("pModel created for: " + player.getName());
         this.createPlayerModel(player);
       }
-    }return true; 
+    }return true;
   }
 
   playerExistsInFile(player){
@@ -88,7 +88,7 @@ class Game{
 
   getPModel(playerName){
     let pModel = this.playerModels.get(playerName);
-    return pModel; 
+    return pModel;
   }
 
   getPlayerList(){
@@ -98,7 +98,7 @@ class Game{
   getPlayerNames(){
     let playerNames = [];
     for(let p of this.playerList){
-      playerNames.push(p.getName());  
+      playerNames.push(p.getName());
     }return playerNames;
   }
 
@@ -122,7 +122,7 @@ class Game{
     console.log(name + " has been added to the game!");
   }//end addPlayer
 
-  //creates a new turn 
+  //creates a new turn
   newTurn(turnNum, game){
     let newTurn = new Turn(turnNum, game);
     return newTurn;
@@ -158,7 +158,7 @@ class Game{
     }else{
       console.log("\nThe winner is: " + this.winner.getName() + " with $" + this.winner.currScore + " million!");
     }
-    this.savePlayerModels();    
+    this.savePlayerModels();
   }//end gameLoop
 
 

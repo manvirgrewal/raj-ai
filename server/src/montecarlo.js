@@ -13,7 +13,7 @@ console.log = function(){};
 class monteCarlo{
 
   constructor(turn, player){
-    //Deep clones to set mc per simulation back to current turn 
+    //Deep clones to set mc per simulation back to current turn
     this.frozenTurn = cloneDeep(turn); //do not touch
     this.playerCopy = cloneDeep(player); //do not touch
 
@@ -22,7 +22,7 @@ class monteCarlo{
     this.player = player;
     this.state = new State(this.turn); //state holds important turn properties
     this.newSimGame = null; //holds gameSim instance
-    
+
 
     //Simulation Stats
     this.thePrize = this.turn.turnPrize;
@@ -30,10 +30,10 @@ class monteCarlo{
     this.simRuns = 1000;
     this.simWins = 0;
     this.cardsThatWon = new Deck().createMoneyCountDeck(); //[Card, numberOfWins];
- 
+
     //for prediction
     this.totalPrize = 0;
-    
+
     //Prediction Simulation Stats
     this.losingCards = [];
     this.winningCards = [];
@@ -63,8 +63,8 @@ class monteCarlo{
     //we want to simulate what would happen if we won this prize
     let sims = 0;
     while (sims<this.simRuns){
-      this.simulate(); 
-      sims++; 
+      this.simulate();
+      sims++;
       this.resetMC();
     }
     return this.calculateBestMove(); //using available Mc statistics, figure out optimal card choice
@@ -145,7 +145,6 @@ class monteCarlo{
       this.winningCards.push(this.newSimGame.possibleWinCard.getValue());
     }else{
     }
-    
   }
 
   //merge two bestCard arrays, sums the values

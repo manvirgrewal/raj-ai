@@ -17,7 +17,7 @@ class gameSim{
     this.currPrizes = state.currPrizes; //available prizes for this turn
     this.winner = null; //initially there is no winner
     this.ai = cloneDeep(ai);
-    this.aiPlayer = cloneDeep(ai); 
+    this.aiPlayer = cloneDeep(ai);
     this.possibleWinCard = null;
     this.rollOverPrizes = []; //prizes rolled over from a turn
     this.totalTurnPrize = 0; //total turn prize including roll over

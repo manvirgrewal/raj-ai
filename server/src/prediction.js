@@ -12,7 +12,7 @@ console.log = function(){};
 
 class predictor{
 
-    //predict ai move based on opponent responses 
+    //predict ai move based on opponent responses
     constructor(turn, aiPlayer){
         this.frozenTurn = cloneDeep(turn); //do not touch
         this.aiCopy = cloneDeep(aiPlayer); //do not touch
@@ -22,7 +22,7 @@ class predictor{
         this.aiCards = this.aiPlayer.mCards.getVals();
         this.state = new State(this.turn); //important turn properties
         this.newSimGame = null; //simulated instance of the game
-       
+
         this.opponents = this.turn.game.getOtherPlayerNames(aiPlayer); //name list of opponents
         this.pModels = this.turn.game.playerModels; //opponent responses
         this.totalPrize = null;
@@ -32,7 +32,7 @@ class predictor{
 
         //simulation results
         this.winningCards = null;
-        this.winCardsCount = null; 
+        this.winCardsCount = null;
         this.losingCards = null;
         this.NumOfResponses = 0;
         this.totalSimilarity = 0;
@@ -46,7 +46,7 @@ class predictor{
     }
 
     //after a simulation, the state must be reset back to original
-    //so we can run multiple simulations using the same turn information  
+    //so we can run multiple simulations using the same turn information
     resetPredictor(){
         this.turn = cloneDeep(this.frozenTurn);
         this.aiPlayer = cloneDeep(this.playerCopy);
@@ -67,7 +67,7 @@ class predictor{
         this.totalPrize = null;
 
         this.bestMove = null;
-        this.chosenCard = null; 
+        this.chosenCard = null;
     }
 
     //returns list of players that can win the game in current state
@@ -81,12 +81,12 @@ class predictor{
         }
         return playersThatCanWin;
     }
-    
+
     //returns true or false
-    //shallow canWin 
+    //shallow canWin
     //--> tests whether player can win if opponents only play their lowest cards
     canWin(player, totalPrize){
-        this.totalPrize = totalPrize; 
+        this.totalPrize = totalPrize;
         let canWins = this.runSim(0, player, 1000);  //returns simWins/simRuns
         this.winCardsCount = countBy(this.winningCards);
         console.log("Overall Winning Chance: " + canWins + "\nLosing Choices: " + this.getLosingCards(this.winningCards));
@@ -99,7 +99,7 @@ class predictor{
     }
 
     likelyOpponentMoves(totalPrize, func){
-        var self = this; 
+        var self = this;
         func(self);
         this.getLikelyValues(totalPrize);
     }
@@ -113,8 +113,8 @@ class predictor{
                 mc.resetMC();
                 this.winningCards = mc.winningCards;
                 simRuns++;
-            }this.overallWinChance = mc.simWins/simRuns; 
-            return this.overallWinChance; 
+            }this.overallWinChance = mc.simWins/simRuns;
+            return this.overallWinChance;
         }
     }
 
@@ -125,32 +125,32 @@ class predictor{
             if(!winningArr.find(el => el === val)){
                 losingArr.push(val);
             }
-        }return losingArr; 
+        }return losingArr;
     }
 
     predictBestMove(player){
         var highestScoreDiff = this.aiPlayer.currScore - player.currScore;
         console.log("Score Diff: " + highestScoreDiff);
         //rules
-        //emergency!! if winchance drops too low, ai must get all cards in any of the returned combos 
+        //emergency!! if winchance drops too low, ai must get all cards in any of the returned combos
         if(highestScoreDiff < 0 && this.overallWinChance < 0.45){
             let posWinningArrs = this.posCardsRemoveDiff(highestScoreDiff); //returns array of possible card combinations that add to highestScoreDiff+1.
             let negWinningArrs = this.negCardsRemoveDiff(highestScoreDiff);
             //console.log(posWinningArrs);
             //console.log(negWinningArrs);
-            let currentPrize = this.turn.game.turnPrize; 
+            let currentPrize = this.turn.game.turnPrize;
             if(posWinningArrs.some(arr => arr.some(el => el === currentPrize))){
                 //console.log("Highest Win Card: " + this.getCurrentHighestWinCard(player.probableChoice,));
                 this.chosenCard = this.getCurrentHighestWinCard(player.probableChoice,);
                 return this.chosenCard;
             }else if(negWinningArrs.some(arr => arr.some(el => el === currentPrize))){
                 //console.log("Highest Win Card: " + this.getCurrentHighestWinCard(player.probableChoice,));
-                this.chosenCard = this.getCurrentHighestWinCard(player.probableChoice,); 
+                this.chosenCard = this.getCurrentHighestWinCard(player.probableChoice,);
                 return this.chosenCard;
             }
         }
 
-        //if we predict the player will play a high card we don't have one higher or the same- we will save our high cards and play our lowest. 
+        //if we predict the player will play a high card we don't have one higher or the same- we will save our high cards and play our lowest.
         if(!this.haveHigher(player.probableChoice, this.aiCards) && !this.haveSame(player.probableChoice, this.aiCards)){
             this.chosenCard = this.getCurrentLowestCard(this.aiCards);
             console.log("Lowest Card: " + this.chosenCard);
@@ -214,29 +214,29 @@ class predictor{
 
 
     strToNums(arr){
-        let numArr = []; 
+        let numArr = [];
         for(let el of arr){
             numArr.push(parseInt(el));
         }return numArr;
     }
 
     getCurrentLowestCard(cards){
-        var lowestVal = -Infinity; 
+        var lowestVal = -Infinity;
         for(let card of cards){
             if(card > lowestVal){
                 lowestVal = card;
             }
-        }return lowestVal; 
+        }return lowestVal;
     }
-    
+
     getCurrentHighestWinCard(){
-        var highestVal = 0; 
+        var highestVal = 0;
         let cards = this.aiCards;
         for(let card of cards){
             if(parseInt(card) > highestVal){
                 highestVal = parseInt(card);
             }
-        }return highestVal; 
+        }return highestVal;
     }
 
     getNextHighestWinCard(target, avoidCard){
@@ -247,7 +247,7 @@ class predictor{
                 highestVal = parseInt(card);
                 return highestVal;
             }
-        }return highestVal; 
+        }return highestVal;
     }
 
 
@@ -282,7 +282,7 @@ class predictor{
         const solver = sumService.subsetSum(this.getOnlyNegative(this.turn.game.prizes.getValsSorted().concat([this.turn.turnPrize.getValue])), difference, max);
         for (let solution of solver) {
             negWinningCombos.push(solution.map(x=> x*(-1)));
-        }return negWinningCombos; 
+        }return negWinningCombos;
     }
 
 
@@ -307,7 +307,7 @@ class predictor{
 
                 if(player.pScores.length > 0){
                     var closestScore = this.closestValInArray(player.pScores, actualOppo.currScore);
-                    player.closestScore = closestScore; 
+                    player.closestScore = closestScore;
                     console.log(player.name + "'s Current Score: " + actualOppo.currScore + "\nClosest past score: " + player.closestScore);
                 }else{
                     console.log(player.name + "'s Current Score: " + actualOppo.currScore)
@@ -329,8 +329,8 @@ class predictor{
                 //set relevant stats
                 player.currHand = actualOppo.mCards.getVals();
                 player.currScore = actualOppo.currScore;
-                player.totalPrize = totalPrize; 
-                
+                player.totalPrize = totalPrize;
+
                 let fuzzyBestMatchValues = [closestHand, closestScore, otherPlayers, closestPrizes, closestTotalPrize];
                 //console.log(fuzzyBestMatchValues);
                 let joinedVals = fuzzyBestMatchValues.join(',');
@@ -350,10 +350,10 @@ class predictor{
                 let closestPredictedValInHand = this.closestValInArray(actualOppo.mCards.getVals(), predictedVal);
                 if(this.closestResponse != null){
                     console.log("Predicted Value= " + closestPredictedValInHand);
-                    player.probableChoice = predictedVal; 
+                    player.probableChoice = predictedVal;
                 }
             }
-            this.bestMove = this.predictBestMove(player);        
+            this.bestMove = this.predictBestMove(player);
         }
     }
 
@@ -390,7 +390,7 @@ class predictor{
 
                 if(Math.abs(closestLengthArrays[i][j]-array[j]) < 5 && evenFuzzierArray.indexOf(closestLengthArrays[i][j]) === -1){
                     evenFuzzierArray = closestLengthArrays[i]
-                } 
+                }
             }
         }
         let threeArrays = [intersectArray, fuzzyArray, evenFuzzierArray];
@@ -411,14 +411,14 @@ class predictor{
         var ans;
         for(i in array){
              var m=Math.abs(num-array[i]);
-             if(m<minDiff){ 
-                    minDiff=m; 
-                    ans=array[i]; 
+             if(m<minDiff){
+                    minDiff=m;
+                    ans=array[i];
                 }
           }
         return ans;
     }
-    
+
 
 
     aggregateData(value, key, map){
@@ -440,7 +440,7 @@ class predictor{
         //let pastPlayers = this.getPlayers(parsedResponses);
         let pastResponses = parsedResponses;
         let oppo = new opponent(player, pastMoves, pastScores, pastHands, pastPrizes, null, pastResponses, pastTotalPrizes);
-        this.oppoData.push(oppo);        
+        this.oppoData.push(oppo);
         //console.log("Past Moves: " + moves + "\nPast Scores: " + scores);
     }
 
@@ -450,7 +450,7 @@ class predictor{
         for(let response of arr){
             moves.push(response['cardSelected']['value']);
         }
-        return moves; 
+        return moves;
     }
 
     getScores(arr){
@@ -458,21 +458,21 @@ class predictor{
         for(let response of arr){
             scores.push(response['scoreAtResp']);
         }
-        return scores; 
+        return scores;
     }
     getHand(arr){
         let hand = [];
         for(let response of arr){
             hand.push(response['handAtResp']);
         }
-        return hand; 
+        return hand;
     }
     getPrizes(arr){
         let prizesLeft = [];
         for(let response of arr){
             prizesLeft.push(response['prizesAtResp']);
         }
-        return prizesLeft; 
+        return prizesLeft;
     }
 
     getPlayers(arr){
@@ -484,7 +484,7 @@ class predictor{
             }
         }
         //console.log(otherPlayers);
-        return otherPlayers; 
+        return otherPlayers;
     }
 
     getTotalTurnPrize(arr){

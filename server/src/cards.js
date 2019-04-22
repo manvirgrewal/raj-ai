@@ -83,9 +83,9 @@ class Deck{
     var ans;
     for(i in array){
          var m=Math.abs(num-array[i]);
-         if(m<minDiff){ 
-                minDiff=m; 
-                ans=array[i]; 
+         if(m<minDiff){
+                minDiff=m;
+                ans=array[i];
             }
       }
     return ans;
@@ -148,8 +148,8 @@ class Deck{
 
   //allow dealing one prize card each turn
   deal(){
-    //removes and returns end card from deck 
-    return this.deck.pop(); 
+    //removes and returns end card from deck
+    return this.deck.pop();
   }//end deal
 
   //creates a deck of money for a player

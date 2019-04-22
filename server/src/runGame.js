@@ -17,7 +17,7 @@ function runGames(){
     newGame.addPlayer("Manvir", 0);
     //newGame.addPlayer("AI2", 0);
     //newGame.addPlayer("Somebody", 0);
-    newGame.start() 
+    newGame.start()
     if(newGame.winner == newGame.playerList[0] ){
       wins++;
     } n++;

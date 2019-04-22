@@ -14,42 +14,42 @@ class Turn{
     this.turnPrize = null; //this turns prize
       this.allTurnPrizes = []; //current turn prize and rolled over prize
       this.rollOverPrizesValue = 0; //sum value of rolled over prizes
-      this.totalTurnPrize = 0; //sum value of all prizes, including rolled over 
+      this.totalTurnPrize = 0; //sum value of all prizes, including rolled over
     this.turnWinner = null; //this turns winner
   }
 
 
-  //returns list 
+  //returns list
   getAllTurnPrizes(){
     return this.allTurnPrizes;
   }
 
-  
+
   //starts turn
   turn(){
     //draws prize card for turn, and adds in rolled over prize values
-    this.turnDraw(); 
+    this.turnDraw();
     //checks if any prizes rolled over from last turn and displays them
-    this.rollOverPrizes(); 
+    this.rollOverPrizes();
     //cycles through all players and let them choose
-    this.turnChoose(); 
+    this.turnChoose();
     //calculates and displays turn winner
-    this.turnWin(); 
+    this.turnWin();
   }//end turn
 
   //draws prize for turn
   turnDraw(){
     //set turnPrize attrib to prize drawn
-    this.turnPrize = this.game.prizes.deal(); 
-    //add prize drawn to list in case of roll overs 
+    this.turnPrize = this.game.prizes.deal();
+    //add prize drawn to list in case of roll overs
     this.allTurnPrizes.push(this.turnPrize);
-    //add this turns prize to total turn prize 
+    //add this turns prize to total turn prize
     this.totalTurnPrize += this.turnPrize.getValue();
     //output drawn prize card
     console.log("Prize Card Drawn: " + this.turnPrize.getName() + ". It has as a value of: " + this.turnPrize.getValue() + " million!");
   }
-  
-  //deals with potential roll over prizes from past turns 
+
+  //deals with potential roll over prizes from past turns
   rollOverPrizes(){
     if(this.game.rollOverPrizes.length > 0){
       console.log("Additional prize(s) from last turn(s): ");
@@ -59,7 +59,7 @@ class Turn{
         this.rollOverPrizesValue += prize.getValue();
         console.log(prize.getName() + ": " + prize.getValue() + " million");
       }
-      //add roll over prize values to total turn prize 
+      //add roll over prize values to total turn prize
       this.totalTurnPrize += this.rollOverPrizesValue;
       console.log("Total value of prizes this turn: " + this.totalTurnPrize + " million!");
     }
@@ -70,7 +70,7 @@ class Turn{
     //console.log("Other prizes remaining: "+ this.game.getPrizes().getCardNames());
     //cycle through all players and let them choose
 
-  
+
     for (let player of this.game.playerList){
       if (player.aiEnable === 1){
         //this.chooseWithMonte(player);
@@ -83,7 +83,7 @@ class Turn{
           this.chooseRandomly(player);
         }else{
           if(this.totalTurnPrize > 15){
-            var turnPrize = 15; 
+            var turnPrize = 15;
           }else if (this.totalTurnPrize < -5){
             var turnPrize = -5;
           }else{
@@ -92,7 +92,7 @@ class Turn{
 
             var predict = new predictor(this, player);
             var cardVal = predict.canWin(player, turnPrize);
-         
+
             let cardName = cardVal + "k";
             let cardIndex = player.mCards.deck.findIndex(card => card.name === cardName);
             player.mCards.deck.splice(cardIndex, 1);
@@ -108,10 +108,10 @@ class Turn{
       }else{
         console.log(player.getName() + "'s hand: " + player.mCards.getVals());
         //Initialize a Response for player
-        //Treat Total Turn Prizes Like Regular Prize Cards! 
+        //Treat Total Turn Prizes Like Regular Prize Cards!
 
         if(this.totalTurnPrize > 15){
-          var responsePrize = 15; 
+          var responsePrize = 15;
         }else if (this.totalTurnPrize < -5){
           var responsePrize = -5;
         }else{
@@ -119,7 +119,7 @@ class Turn{
         }
 
         var response = new Response(null, player.mCards.getVals(), player.currScore, this.game.getOtherPlayerNames(player), this.game.prizes.getValsSorted(), this.totalTurnPrize);
-        
+
         this.chooseWithInput(player);
         //player.currCard = player.chooseCard();
         //this.chooseWithDoubleAbs(player);
@@ -173,17 +173,17 @@ class Turn{
     let cardVal = parseInt(readlineSync.question("Enter card num: ", {
     }));
     let cardExists = player.mCards.deck.some(el => el.getValue() === cardVal);
-    
+
     while(!cardExists){
       console.log("This card does not exist in your hand.");
       cardVal = parseInt(readlineSync.question("Enter card num: ", {
       }));
       cardExists = player.mCards.deck.some(el => el.getValue() === cardVal);
     }
-    
+
     let cardName = cardVal + "k";
     let cardIndex = player.mCards.deck.findIndex(card => card.name === cardName);
-    
+
     player.mCards.deck.splice(cardIndex, 1);
     player.numMcards--;
     player.currCard = new Card(cardName, cardVal);
@@ -197,9 +197,9 @@ class Turn{
   }
 
   turnWin(){
-    //calculate turn winner based on their currCard and the current total prize value 
+    //calculate turn winner based on their currCard and the current total prize value
     this.turnWinner = this.calculateTurnWinner(this.totalTurnPrize);
-    //if there is no winner, roll over 
+    //if there is no winner, roll over
     if (this.turnWinner == null){
       console.log("All cards cancelled out so the prize rolls over to the next turn!");
       this.game.rollOverPrizes.push(this.turnPrize);
@@ -208,9 +208,9 @@ class Turn{
       console.log("This turns winner is: " + this.turnWinner.getName());
       this.turnWinner.currScore += this.totalTurnPrize;
       this.game.rollOverPrizes = []; //reset rollOverPrizes after they are won
-      this.allTurnPrizes = []; 
+      this.allTurnPrizes = [];
       this.totalTurnPrize = 0;
-      //outputs each players total score 
+      //outputs each players total score
       this.printScores();
     }
   }
@@ -246,7 +246,7 @@ class Turn{
     for(let i=0; i<this.game.playerList.length; i++){
       var currPlayer = this.game.playerList[i];
       for(let j=0; j<this.game.playerList.length; j++){
-        //we continue if the comparison was with oneself 
+        //we continue if the comparison was with oneself
         if (currPlayer.getName() == this.game.playerList[j].getName()){
           continue; //if comparing with the same player, skip to next
         }else if(currPlayer.currCard.getValue() == this.game.playerList[j].currCard.getValue()){
