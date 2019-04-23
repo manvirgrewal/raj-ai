@@ -85,6 +85,8 @@ class predictor{
     //returns true or false
     //shallow canWin
     //--> tests whether player can win if opponents only play their lowest cards
+    //--> creates list of cards with winCount (choosing the card resulted in a win)
+    //--> creates list of likely opponent moves
     canWin(player, totalPrize){
         this.totalPrize = totalPrize;
         let canWins = this.runSim(0, player, 1000);  //returns simWins/simRuns
@@ -92,16 +94,16 @@ class predictor{
         console.log("Overall Winning Chance: " + canWins + "\nLosing Choices: " + this.getLosingCards(this.winningCards));
         console.log("Card Win Counts:" + JSON.stringify(this.winCardsCount));
 
-        this.likelyOpponentMoves(this.totalPrize, function(self){
+        this.likelyOpponentMoves(function(self){
             return self.pModels.forEach(self.aggregateData, self);
         });
         return this.bestMove;
     }
 
-    likelyOpponentMoves(totalPrize, func){
+    likelyOpponentMoves(func){
         var self = this;
         func(self);
-        this.getLikelyValues(totalPrize);
+        this.getLikelyValues(this.totalPrize);
     }
 
     runSim(simType, player, numOfSims){
@@ -129,67 +131,83 @@ class predictor{
     }
 
     predictBestMove(player){
-        var highestScoreDiff = this.aiPlayer.currScore - player.currScore;
-        console.log("Score Diff: " + highestScoreDiff);
+        function diff(a,b){return Math.abs(a-b);}
+        var scoreDiff = diff(this.aiPlayer.currScore, player.currScore)
+        //console.log("Score Diff: " + scoreDiff);
         //rules
         //emergency!! if winchance drops too low, ai must get all cards in any of the returned combos
-        if(highestScoreDiff < 0 && this.overallWinChance < 0.45){
-            let posWinningArrs = this.posCardsRemoveDiff(highestScoreDiff); //returns array of possible card combinations that add to highestScoreDiff+1.
-            let negWinningArrs = this.negCardsRemoveDiff(highestScoreDiff);
-            //console.log(posWinningArrs);
-            //console.log(negWinningArrs);
-            let currentPrize = this.turn.game.turnPrize;
-            if(posWinningArrs.some(arr => arr.some(el => el === currentPrize))){
-                //console.log("Highest Win Card: " + this.getCurrentHighestWinCard(player.probableChoice,));
-                this.chosenCard = this.getCurrentHighestWinCard(player.probableChoice,);
+        if(scoreDiff > 0 && this.overallWinChance < 0.2){
+            let posWinningArrs = this.posCardsRemoveDiff(scoreDiff); //returns array of possible card combinations that add to scoreDiff+1.
+            let negWinningArrs = this.negCardsRemoveDiff(scoreDiff);
+            console.log(posWinningArrs);
+            console.log(negWinningArrs);
+            let currentPrize = this.totalPrize
+            if(posWinningArrs.some(arr => arr.some(el => el === this.totalPrize))){
+                //console.log("Highest Win Card: " + this.getHighestWinCard(player.probableChoice,));
+                this.chosenCard = this.getHighestWinCard(player.probableChoice);
+                console.log("chose option -2 " + this.chosenCard)
                 return this.chosenCard;
-            }else if(negWinningArrs.some(arr => arr.some(el => el === currentPrize))){
-                //console.log("Highest Win Card: " + this.getCurrentHighestWinCard(player.probableChoice,));
-                this.chosenCard = this.getCurrentHighestWinCard(player.probableChoice,);
+            }else if(negWinningArrs.some(arr => arr.some(el => el === this.totalPrize))){
+                //console.log("Highest Win Card: " + this.getHighestWinCard(player.probableChoice,));
+                this.chosenCard = this.getHighestWinCard(player.probableChoice);
+                console.log("chose option -1 " + this.chosenCard)
                 return this.chosenCard;
             }
         }
 
-        //if we predict the player will play a high card we don't have one higher or the same- we will save our high cards and play our lowest.
+        //if we predict the player will play a high card we don't have one higher and we don't have the same- we will save our high cards and play our lowest.
         if(!this.haveHigher(player.probableChoice, this.aiCards) && !this.haveSame(player.probableChoice, this.aiCards)){
-            this.chosenCard = this.getCurrentLowestCard(this.aiCards);
-            console.log("Lowest Card: " + this.chosenCard);
+            this.chosenCard = this.getLowestCard(this.aiCards);
+            console.log("chose option 0 " + this.chosenCard)
             return this.chosenCard;
         }
-        var opHasHigher = this.haveHigher(this.getCurrentHighestWinCard(player), player.currHand);
-        //if have the same card and none higher, play equal if opponent may beat you if they get the prize
-        if(this.haveSame(player.probableChoice, this.aiCards) && !this.haveHigher(player.probableChoice, this.aiCards) && !opHasHigher){
-            console.log("Have same but not higher, and they don't have higher")
-            if(player.currScore > this.aiPlayer.currScore){
-                this.chosenCard = player.probableChoice; //play the predicted card if they have a higher or equal score to you
-                console.log("Have Higher Score: " + this.chosenCard);
-                return this.chosenCard;
-            }else{ //if the highScoreDiff is more than the totalPrize, I gotta have it
-                this.chosenCard = this.closestValInArray(this.aiCards, player.probableChoice);
-                return this.chosenCard;
+        var opHasHigherThanProb = this.getHighestCard(player.currHand) > player.probableChoice
+        var aiHasHigherThanProb = this.getHighestCard(this.aiCards) > player.probableChoice
+        const margin = 5 //minimum ideal difference to keep between player and ai score - if the player wants to win
+
+        //if ai win's prize and player has less score
+        if (player.currScore <= (this.aiPlayer.currScore + Math.abs(this.totalPrize))){
+            if (!opHasHigherThanProb && !aiHasHigherThanProb) {  //if op/ai don't have higher than prob:
+                this.chosenCard = this.getHighestWinCardDodgeRoll(this.aiCards, 1) //play close to the same
+                console.log("chose option 1 " + this.chosenCard)
+                return this.chosenCard
+            } else if (opHasHigherThanProb && !aiHasHigherThanProb) { //if ai don't have higher than prob:
+                this.chosenCard = this.getLowestCard(this.aiCards)  //save cards, because op will probably get it
+                console.log(this.totalPrize)
+                console.log("chose option 2 " + this.chosenCard)
+                return this.chosenCard
+            } else if (!opHasHigherThanProb && aiHasHigherThanProb) { //if ai has higher than prob, but op doesn't
+                this.chosenCard = this.getHighestWinCardDodgeRoll(player.probableChoice, 0) //choose highest winratio card that is higher than probable
+                console.log("chose option 3 " + this.chosenCard)
+                return this.chosenCard
+            }else { // both have higher the probable
+                this.chosenCard = this.getHighestWinCardDodgeRoll(player.probableChoice, 0) //choose highest winratio card that is higher than probable
+                console.log("chose option 4 " + this.chosenCard)
+                return this.chosenCard
             }
-        }else{
-            this.chosenCard = this.closestValInArray(this.aiCards, player.probableChoice);
-            return this.chosenCard;
-            /*
-            if(this.chosenCard == null){
-                let higherThanOP = 0;
-                while (higherThanOP < player.probableChoice){
-                    higherThanOP = this.closestValInArray(this.aiCards, this.getNextHighestWinCard(player.probableChoice, higherThanOP));
-                    //console.log("Higher than OP: " + higherThanOP);
-                }
-                this.chosenCard = higherThanOP;
-                return this.chosenCard;
-            }else{
-                let higherThanOP = this.chosenCard;
-                while (higherThanOP < player.probableChoice){
-                    higherThanOP = this.closestValInArray(winCards, this.getNextHighestWinCard(player.probableChoice, higherThanOP));
-                    //console.log("Higher than OP: " + higherThanOP);
-                }
-                this.chosenCard = higherThanOP;
-                return this.chosenCard;
+        //if ai win's prize and player still has higher score than margin
+        } else if ((player.currScore - (this.aiPlayer.currScore + Math.abs(this.totalPrize))) >= margin){
+            if (!opHasHigherThanProb && !aiHasHigherThanProb) {  //if op/ai don't have higher than prob:
+                this.chosenCard = this.getHighestWinCardDodgeBack(player.probableChoice, 1) //play a little lower than probable
+                console.log("chose option 7 " + this.chosenCard)
+                return this.chosenCard
+            } else if (opHasHigherThanProb && !aiHasHigherThanProb) { //if ai don't have higher than prob:
+                this.chosenCard = this.getLowestCard(this.aiCards)  //save cards, because op will probably get it
+                console.log("chose option 8 " + this.chosenCard)
+                return this.chosenCard
+            } else if (!opHasHigherThanProb && aiHasHigherThanProb) { //if ai has higher than prob, but op doesn't
+                this.chosenCard = this.getHighestWinCardDodgeRoll(player.probableChoice, 0) //player a little higher than probable
+                console.log("chose option 9 " + this.chosenCard)
+                return this.chosenCard
+            } else { //both have higher than prob
+                this.chosenCard = this.getHighestWinCardDodgeRoll(player.probableChoice, 0) //player a little higher than probable
+                console.log("chose option 10 " + this.chosenCard)
+                return this.chosenCard
             }
-            */
+        } else {
+            this.chosenCard = this.getHighestWinCardDodgeRoll(player.probableChoice, 1) //choose highest winratio card that is higher than probable
+            console.log("chose option 11 " + this.chosenCard)
+            return this.chosenCard
         }
 
     }
@@ -214,43 +232,84 @@ class predictor{
 
 
     strToNums(arr){
-        let numArr = [];
+        var numArr = [];
         for(let el of arr){
             numArr.push(parseInt(el));
         }return numArr;
     }
 
-    getCurrentLowestCard(cards){
-        var lowestVal = -Infinity;
-        for(let card of cards){
-            if(card > lowestVal){
-                lowestVal = card;
-            }
-        }return lowestVal;
+    getLowestCard(cards){
+        var ascSortedCards = cards.sort((a, b) => a - b)
+        if (ascSortedCards != []) {
+            return ascSortedCards[0] //return first card
+        } else {
+            console.log("can't get lowest card: none left")
+        }
     }
 
-    getCurrentHighestWinCard(){
-        var highestVal = 0;
-        let cards = this.aiCards;
-        for(let card of cards){
-            if(parseInt(card) > highestVal){
-                highestVal = parseInt(card);
-            }
-        }return highestVal;
+    getHighestCard(cards){
+        var ascSortedCards = cards.sort((a, b) => a - b)
+        if (ascSortedCards != []) {
+            return ascSortedCards[ascSortedCards.length-1] //return last card
+        } else {
+            console.log("can't get highest card: none left")
+        }
     }
 
-    getNextHighestWinCard(target, avoidCard){
-        let highestVal = target;
-        let cards = this.aiCards;
-        for(let card of cards){
-            if(parseInt(card) > highestVal && parseInt(card) !== avoidCard){
-                highestVal = parseInt(card);
-                return highestVal;
+    getHighestWinCard(){
+        var winCount = 0
+        var highestWinCard = null
+        for (let card in this.winCardsCount) {
+            if (this.winCardsCount[card] > winCount) {
+                winCount = this.winCardsCount[card]
+                highestWinCard = parseInt(card)
             }
-        }return highestVal;
+        }
+        if (highestWinCard === null){
+            highestWinCard = this.getHighestCard(this.aiCards)
+        }
+        return this.closestValInArray(this.aiCards, highestWinCard)
     }
 
+    //get card with highest win ratio, while not being equal to avoidCard
+    getHighestWinCardDodge(avoidCard){
+        var winCount = 0
+        var highestWinCard = null
+        for (let card in this.winCardsCount) {
+            if (this.winCardsCount[card] > winCount && parseInt(card) !== avoidCard) {
+                winCount = this.winCardsCount[card]
+                highestWinCard = parseInt(card)
+            }
+        }
+        return this.closestValInArray(this.aiCards, highestWinCard)
+    }
 
+    //get card with highest win ratio, while being greater than avoidCard+margin
+    getHighestWinCardDodgeRoll(avoidCard, margin){
+        var winCount = 0
+        var highestWinCard = null
+        for (let card in this.winCardsCount) {
+            if (this.winCardsCount[card] > winCount && parseInt(card) > (avoidCard + margin)) {
+                winCount = this.winCardsCount[card]
+                highestWinCard = parseInt(card)
+            }
+        }
+        return this.closestValInArray(this.aiCards, highestWinCard)
+    }
+    //get card with highest win ratio, while being less than avoidCard+margin
+    getHighestWinCardDodgeBack(avoidCard, margin){
+        var winCount = 0
+        var highestWinCard = null
+        for (let card in this.winCardsCount) {
+            if (this.winCardsCount[card] > winCount && (parseInt(card) < (avoidCard + margin))) {
+                winCount = this.winCardsCount[card]
+                highestWinCard = parseInt(card)
+            }
+        }
+        return this.closestValInArray(this.aiCards, highestWinCard)
+    }
+
+    //returns array with only positive nums
     getOnlyPositive(arr){
         let onlyPositive = [];
         for(let num of arr){
@@ -260,6 +319,7 @@ class predictor{
         }return onlyPositive;
     }
 
+    //returns array with only negative nums
     getOnlyNegative(arr){
         let onlyNegative = [];
         for(let num of arr){
@@ -269,24 +329,27 @@ class predictor{
         }return onlyNegative;
     }
 
+    //returns positive card winning combos
     posCardsRemoveDiff(difference, max){
         let posWinningCombos = []
-        const solver = sumService.subsetSum(this.getOnlyPositive(this.turn.game.prizes.getValsSorted().concat([this.turn.turnPrize.getValue()])), difference, max);
+        const solver = sumService.subsetSum(this.getOnlyPositive(this.turn.game.prizes.getValsSorted().concat([this.totalPrize])), difference, max);
         for (let solution of solver) {
             posWinningCombos.push(solution);
         }return posWinningCombos;
     }
 
+    //returns negative card winning combos
     negCardsRemoveDiff(difference, max){
         let negWinningCombos = []
-        const solver = sumService.subsetSum(this.getOnlyNegative(this.turn.game.prizes.getValsSorted().concat([this.turn.turnPrize.getValue])), difference, max);
+        const solver = sumService.subsetSum(this.getOnlyNegative(this.turn.game.prizes.getValsSorted().concat([this.totalPrize])), difference, max);
         for (let solution of solver) {
             negWinningCombos.push(solution.map(x=> x*(-1)));
         }return negWinningCombos;
     }
 
-
-
+    //gets most likely op moves
+    //then gets probable move
+    //then looks for best move for ai
     getLikelyValues(totalPrize){
         var actualPlayers = this.turn.game.playerList;
         //var closestPrizeToTotal = this.closestValInArray((this.turn.game.prizes.getVals()), totalPrize);
@@ -315,21 +378,21 @@ class predictor{
 
                 let closestHand = this.fuzzyArrayFinder(actualOppo.mCards.getVals(), player.pHands);
                 player.closestHand = closestHand;
-                console.log("Closest Hand: " + player.closestHand);
+                //console.log("Closest Hand: " + player.closestHand);
 
                 let closestPrizes= this.fuzzyArrayFinder(this.turn.game.prizes.getValsSorted(), player.pPrizes);
                 player.closestPrizes = closestPrizes;
-                console.log("Closest Prizes: " + player.closestPrizes);
+                //console.log("Closest Prizes: " + player.closestPrizes);
                 let otherPlayers = player.pPlayers;
 
-                let closestTotalPrize = this.closestValInArray(player.pTotalPrizes, this.turn.totalTurnPrize);
+                let closestTotalPrize = this.closestValInArray(player.pTotalPrizes, this.totalPrize);
                 player.closestTotalPrize = closestTotalPrize;
-                console.log("Current total prize: " + this.turn.totalTurnPrize + "\nClosest past total prize: " + player.closestTotalPrize);
+                //console.log("Current total prize: " + this.totalPrize+ "\nClosest past total prize: " + player.closestTotalPrize);
 
                 //set relevant stats
                 player.currHand = actualOppo.mCards.getVals();
                 player.currScore = actualOppo.currScore;
-                player.totalPrize = totalPrize;
+                player.totalPrize = this.totalPrize;
 
                 let fuzzyBestMatchValues = [closestHand, closestScore, otherPlayers, closestPrizes, closestTotalPrize];
                 //console.log(fuzzyBestMatchValues);
@@ -346,10 +409,13 @@ class predictor{
                         this.closestResponse = response;
                     }
                 }
-                let predictedVal = this.closestResponse['cardSelected']['value'];
-                let closestPredictedValInHand = this.closestValInArray(actualOppo.mCards.getVals(), predictedVal);
-                if(this.closestResponse != null){
+                var predictedVal = this.closestResponse['cardSelected']['value'];
+                if(this.closestResponse != null && !this.haveSame(predictedVal, actualOppo.mCards.getVals())){
+                    let closestPredictedValInHand = this.closestValInArray(actualOppo.mCards.getVals(), predictedVal);
                     console.log("Predicted Value= " + closestPredictedValInHand);
+                    player.probableChoice = closestPredictedValInHand;
+                }else{
+                    console.log("Predicted Value= " + predictedVal);
                     player.probableChoice = predictedVal;
                 }
             }
@@ -357,6 +423,7 @@ class predictor{
         }
     }
 
+    //finds array length closest to 'array'.length in set of 'arrays'
     closestLengthArray(array, arrays){
         let len = array.length;
         let lens = []
@@ -402,6 +469,7 @@ class predictor{
           });
     }
 
+    //returns value in 'array' that is closest to 'num'
     closestValInArray(array, num, minDiff){
         if(array === []){
             return num;
@@ -419,8 +487,7 @@ class predictor{
         return ans;
     }
 
-
-
+    //splices apart op's prize responses and creates an 'oppo' object with the spliced data
     aggregateData(value, key, map){
         let player = key; //player name
         //value == allResponse: [], responses: map {prize => {...}}

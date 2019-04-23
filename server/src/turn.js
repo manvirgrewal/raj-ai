@@ -56,7 +56,7 @@ class Turn{
       //iterate through all roll over prizes and add them to this turn attribs
       for(let prize of this.game.rollOverPrizes){
         this.allTurnPrizes.push(prize);
-        this.rollOverPrizesValue += prize.getValue();
+        this.rollOverPrizesValue += prize.getValue(); //sum rolled over prize values
         console.log(prize.getName() + ": " + prize.getValue() + " million");
       }
       //add roll over prize values to total turn prize
@@ -80,14 +80,14 @@ class Turn{
         //first game - employ monte carlo or random or doubleabs
         if(this.game.fileNotEmpty == false){
           //this.chooseWithDoubleAbs(player);
-          this.chooseRandomly(player);
+          this.chooseWithMonte(player);
         }else{
-          if(this.totalTurnPrize > 15){
+          if(this.totalTurnPrize > 10){
             var turnPrize = 15;
           }else if (this.totalTurnPrize < -5){
             var turnPrize = -5;
           }else{
-            var turnPrize = this.turnPrize.getValue();
+            var turnPrize = this.totalTurnPrize;
           }
 
             var predict = new predictor(this, player);
@@ -110,12 +110,12 @@ class Turn{
         //Initialize a Response for player
         //Treat Total Turn Prizes Like Regular Prize Cards!
 
-        if(this.totalTurnPrize > 15){
-          var responsePrize = 15;
+        if(this.totalTurnPrize > 10){
+          var responsePrize = 10;
         }else if (this.totalTurnPrize < -5){
           var responsePrize = -5;
         }else{
-          var responsePrize = this.turnPrize.getValue();
+          var responsePrize = this.totalTurnPrize;
         }
 
         var response = new Response(null, player.mCards.getVals(), player.currScore, this.game.getOtherPlayerNames(player), this.game.prizes.getValsSorted(), this.totalTurnPrize);
