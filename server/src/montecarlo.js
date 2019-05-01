@@ -12,7 +12,7 @@ console.log = function(){};
 
 class monteCarlo{
 
-  constructor(turn, player){
+  constructor(turn, player, predictedVal){
     //Deep clones to set mc per simulation back to current turn
     this.frozenTurn = cloneDeep(turn); //do not touch
     this.playerCopy = cloneDeep(player); //do not touch
@@ -37,6 +37,11 @@ class monteCarlo{
     //Prediction Simulation Stats
     this.losingCards = [];
     this.winningCards = [];
+
+    //value predicted by prediction alg to simulate games again using this one as "winCard"
+    //and determine the chances of winning if that card was played for the totalTurnPrize
+    this.predictedVal = null || predictedVal;
+
   }
 
   //sets certain attribs back to start of current turn
@@ -137,7 +142,7 @@ class monteCarlo{
 
   predictionSim(simType){
     this.simGameNum++;
-    this.newSimGame = new gameSim(this.state, 1, this.player);
+    this.newSimGame = new gameSim(this.turn, this.state, simType, this.player, this.predictedVal);
     this.newSimGame.start();
     var simWinner = this.newSimGame.winner;
     if(simWinner != null && simWinner.getName() === this.player.getName()){

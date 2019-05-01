@@ -14,7 +14,7 @@ function runGames(){
     let newGame = new Game();
     //ai is always added first so it can make choices first
     newGame.addPlayer("AI", 1);
-    newGame.addPlayer("Manvir", 0);
+    newGame.addPlayer("You", 0);
     //newGame.addPlayer("AI2", 0);
     //newGame.addPlayer("Somebody", 0);
     newGame.start()
@@ -22,7 +22,7 @@ function runGames(){
       wins++;
     } n++;
   }
-  console.log("Total Ai Wins: " +wins);
+  //console.log("Total Ai Wins: " +wins);
 }
 
 

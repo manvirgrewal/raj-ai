@@ -62,7 +62,7 @@ class Deck{
     return this.deck.some(el => el.getValue() === value);
   }
 
-  getCard(value){
+  getClosestCard(value){
     let cardExists = this.deck.some(el => el.getValue() === value);
     if(cardExists){
       let cardIndex = this.deck.findIndex(card => card.getValue() === value);

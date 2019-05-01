@@ -9,17 +9,23 @@ const { predictor } = require("./prediction.js");
 class Turn{
 
   constructor(turnNum, game){
+    //do not change
     this.game = game; //what game this turn is apart of
     this.turnNum = turnNum; //turn number
-    this.turnPrize = null; //this turns prize
-      this.allTurnPrizes = []; //current turn prize and rolled over prize
-      this.rollOverPrizesValue = 0; //sum value of rolled over prizes
-      this.totalTurnPrize = 0; //sum value of all prizes, including rolled over
+    this.turnPrize = null; //prize card that was drawn this turn
+    this.allTurnPrizes = []; //current turn prize and rolled over prize(s)
+
+    //change
+    this.rollOverPrizesValue = 0; //cal sum of rollover prizes; if tie: update
+    this.totalTurnPrize = 0; //cal sum of rollover + this.turnPrize
+    this.cappedTotalTurnPrize = 0; //for pModel responses: we can't have any cards less or more than actual prize cards
+
+    //returns
     this.turnWinner = null; //this turns winner
   }
 
 
-  //returns list
+  //returns list of all turn prizes -pretty sure I used this in another file.
   getAllTurnPrizes(){
     return this.allTurnPrizes;
   }
@@ -39,6 +45,7 @@ class Turn{
 
   //draws prize for turn
   turnDraw(){
+    //console.log(`// Prizes Left ${this.game.prizes.getValsSorted()} //`);
     //set turnPrize attrib to prize drawn
     this.turnPrize = this.game.prizes.deal();
     //add prize drawn to list in case of roll overs
@@ -63,84 +70,73 @@ class Turn{
       this.totalTurnPrize += this.rollOverPrizesValue;
       console.log("Total value of prizes this turn: " + this.totalTurnPrize + " million!");
     }
+    //Do this regardless:
+    //fixes the issue of rolled over prizes adding up to more or less than any actual prize card value
+    //Note: FUTURE UPDATE: add another parm to pModel response that takes into account values less or more than actual prize cards for prediction
+    //Meant for player prediction, and not card simulation
+    if(this.totalTurnPrize > 10){
+      this.cappedTotalTurnPrize = 10;
+    }else if (this.totalTurnPrize < -5){
+      this.cappedTotalTurnPrize = -5;
+    }else{
+      this.cappedTotalTurnPrize = this.totalTurnPrize;
+    }
   }
 
-  turnChoose(){
-    console.log("Please place a bid!\n");
-    //console.log("Other prizes remaining: "+ this.game.getPrizes().getCardNames());
-    //cycle through all players and let them choose
-
-
-    for (let player of this.game.playerList){
-      if (player.aiEnable === 1){
-        //this.chooseWithMonte(player);
-        //console.log(player.getName() + "'s hand: " + player.mCards.getVals());
-        //console.log("Prizes Left: " + this.game.prizes.getValsSorted());
-
-        //first game - employ monte carlo or random or doubleabs
-        if(this.game.fileNotEmpty == false){
-          //this.chooseWithDoubleAbs(player);
-          this.chooseWithMonte(player);
-        }else{
-          if(this.totalTurnPrize > 10){
-            var turnPrize = 15;
-          }else if (this.totalTurnPrize < -5){
-            var turnPrize = -5;
-          }else{
-            var turnPrize = this.totalTurnPrize;
-          }
-
-            var predict = new predictor(this, player);
-            var cardVal = predict.canWin(player, turnPrize);
-
-            let cardName = cardVal + "k";
-            let cardIndex = player.mCards.deck.findIndex(card => card.name === cardName);
-            player.mCards.deck.splice(cardIndex, 1);
-            player.numMcards--;
-            player.currCard = new Card(cardName, cardVal);
-        }
-
+  //POSSIBLE METHODS OF INPUT SO FAR:
         //this.chooseWithInput(player);
         //this.chooseRandomly(player);
         //this.chooseWithDoubleAbs(player);
         //this.chooseWithMonte(player);
 
-      }else{
+  turnChoose(){
+    console.log("Please place a bid!\n");
+    //Cycle through all players and let them choose
+    for (var player of this.game.playerList){
+      //If player is an AI.. else...
+      if (player.aiEnable === 1){
+        //console.log(`-AI- Hand: ${player.mCards.getVals()}`);
+        //If we have heuristic data, then the ai can use it to make it's choices, otherwise use something else
+        if (this.game.pModelFileIsEmpty == true) { //file is empty: no heuristic data to use: resort to backup methods
+          this.chooseWithMonte(player);
+        } else {
+          //initialize and run predicting algorithm
+          var predict = new predictor(this, player);
+          console.log("The A.I is thinking...")
+          var cardVal = predict.canWin(player, this.totalTurnPrize);
+
+          // var predict2 = new predictor(this, player);
+          // var cardValUsingPredicted = predict2.canWinWithPredicted(player, this.cappedTotalTurnPrize, cardVal);
+          // //console.log(`Card Value Using Predicted Card Value: ${cardValUsingPredicted}`);
+
+          let cardName = cardVal + "k";
+          let cardIndex = player.mCards.deck.findIndex(card => card.name === cardName);
+          player.mCards.deck.splice(cardIndex, 1);
+          player.numMcards--;
+          player.currCard = new Card(cardName, cardVal);
+        }
+      } else {
         console.log(player.getName() + "'s hand: " + player.mCards.getVals());
         //Initialize a Response for player
-        //Treat Total Turn Prizes Like Regular Prize Cards!
-
-        if(this.totalTurnPrize > 10){
-          var responsePrize = 10;
-        }else if (this.totalTurnPrize < -5){
-          var responsePrize = -5;
-        }else{
-          var responsePrize = this.totalTurnPrize;
-        }
-
-        var response = new Response(null, player.mCards.getVals(), player.currScore, this.game.getOtherPlayerNames(player), this.game.prizes.getValsSorted(), this.totalTurnPrize);
-
+        let response = new Response(null, player.mCards.getVals(), player.currScore, this.game.getOtherPlayerNames(player), this.game.prizes.getValsSorted(), this.totalTurnPrize);
+        //Let play choose via console input
         this.chooseWithInput(player);
-        //player.currCard = player.chooseCard();
-        //this.chooseWithDoubleAbs(player);
-        //this.chooseRandomly(player);
-
-        //PLAYER MODEL UPDATE
+        //Set response -> get player model -> push response -> update playerModels
         response.cardSelected = player.currCard;
-        var thisPlayersModel = this.game.getPModel(player.getName());
-
-        thisPlayersModel.add(response, responsePrize);
-        //update playerModel
+        let thisPlayersModel = this.game.getPModel(player.getName());
+        thisPlayersModel.add(response, this.cappedTotalTurnPrize);
         this.game.playerModels.set(player.getName(), thisPlayersModel);
-        //console.log(thisPlayersModel);
       }
-    }this.printChosenCards();
+    }
+    //Console output for player choices
+    this.printChosenCards();
   }
 
+  //chooses card closest to the absolute value of double the total turn prize
   chooseWithDoubleAbs(player){
     let chosenCard = null;
     let prizeVal = Math.abs(this.totalTurnPrize)*2;
-    chosenCard = player.mCards.getCard(prizeVal);
+    chosenCard = player.mCards.getClosestCard(prizeVal);
     let currCardIndex = player.mCards.deck.findIndex(card => card.getValue() === chosenCard.getValue());
     player.mCards.deck.splice(currCardIndex, 1);//remove chosenCard from hand
     player.numMcards--; //decrement number of mcards remaining
@@ -157,6 +153,7 @@ class Turn{
     player.currCard = chosenCard; //set current card to best card
   }
 
+  //Chooses based on data from psuedo montecarlo algorithm
   chooseWithMonte(player){
     //Simulate this turn with monteCarlo:
     let mC = new monteCarlo(this, player);
@@ -168,7 +165,7 @@ class Turn{
     player.currCard = bestCard; //set current card to best card
   }
 
-
+  //Chooses via manual console input
   chooseWithInput(player){
     let cardVal = parseInt(readlineSync.question("Enter card num: ", {
     }));
@@ -189,13 +186,14 @@ class Turn{
     player.currCard = new Card(cardName, cardVal);
   }
 
-  //output chosen cards
+  //Outputs cards that were chosen
   printChosenCards(){
     for (let player of this.game.playerList){
       console.log(player.name + " selected: " + player.currCard.getName());
     }
   }
 
+  //Finds out who won the turn
   turnWin(){
     //calculate turn winner based on their currCard and the current total prize value
     this.turnWinner = this.calculateTurnWinner(this.totalTurnPrize);
@@ -206,6 +204,7 @@ class Turn{
     }else{
       //output winner, sum score, and reset rollover and total prize value
       console.log("This turns winner is: " + this.turnWinner.getName());
+
       this.turnWinner.currScore += this.totalTurnPrize;
       this.game.rollOverPrizes = []; //reset rollOverPrizes after they are won
       this.allTurnPrizes = [];
@@ -214,13 +213,8 @@ class Turn{
       this.printScores();
     }
   }
-  //outputs every players score
-  printScores(){
-    for(let player of this.game.playerList){
-      console.log("\n" + player.getName() + "'s total prize score is: " + player.currScore);
-    }
-  }
 
+  //Helper for turnWin()
   calculateTurnWinner(turnPrize){
     //first remove any players that played the card with the same values
     let uniqueVals = this.uniqueCardPlayers();
@@ -238,7 +232,15 @@ class Turn{
     }
   }//end calculateTurnWinner
 
-  //players who didn't play the same card
+  //Outputs player scores
+  printScores(){
+    for(let player of this.game.playerList){
+      console.log("\n" + player.getName() + "'s total prize score is: " + player.currScore);
+    }
+  }
+
+  //Below are more helpers for turnWin -> calculateTurnWinner
+  //Players who didn't play the same card
   uniqueCardPlayers(){
     var uniqueVals = [];
     var dupes = [];

@@ -23,13 +23,13 @@ class Game{
     this.rollOverPrizes = []; //keeps track of rolled over prizes from past turns
     this.playerModels = new Map();
 
-    this.fileNotEmpty = false;
+    this.pModelFileIsEmpty = true;
     //Load Models
     if(typeof modelsFile.loadPlayerModels == 'function'){
       console.log("Existing Player Model(s) loaded!");
       let tempModels = modelsFile.loadPlayerModels();
       this.playerModels = this.reAssignAllProto(tempModels);
-      this.fileNotEmpty = true;
+      this.pModelFileIsEmpty = false;
     }
   }
 

@@ -1,4 +1,5 @@
 const { Deck } = require("./cards.js");
+const { State } = require("./state.js");
 const { turnSim } = require("./turnSim.js");
 const cloneDeep = require('../node_modules/lodash/cloneDeep');
 
@@ -9,22 +10,41 @@ console.log = function(){};
 
 class gameSim{
 
-  constructor(state, simType, ai){
-    this.state = state;
+  constructor(turn, state, simType, ai, predictedVal){
+    //never changes
+    this.frozenTurn = cloneDeep(turn); //do not touch
+    this.aiCopy = cloneDeep(ai); //do not touch
     this.simType = simType; //0 == monteCarlo, 1==canWin
-    this.playerList = state.playerList;
-    this.prizes = state.prizes; //all available prizes
-    this.currPrizes = state.currPrizes; //available prizes for this turn
+
+    //can change on reset
+    this.turn = turn;
+    this.aiPlayer = ai;
+    this.state = state;
+    this.newSimTurn = null; //holds turnSim instance
+
+    //utility
+    this.playerList = this.state.playerList;
+    this.prizes = this.state.prizes; //all available prizes
+    this.currPrizes = this.state.currPrizes; //available prizes for this turn
+
+    //shouldn't change
+    this.simType = simType;
     this.winner = null; //initially there is no winner
-    this.ai = cloneDeep(ai);
-    this.aiPlayer = cloneDeep(ai);
     this.possibleWinCard = null;
     this.rollOverPrizes = []; //prizes rolled over from a turn
     this.totalTurnPrize = 0; //total turn prize including roll over
     this.bestCards = new Deck().createMoneyCountDeck(); //[Card, numberOfWins]
+
+    //simulate on a predicted value if any
+    this.predictedVal = predictedVal || null;
   }
 
-
+  resetSimToDefault(){
+    this.turn = cloneDeep(this.frozenTurn);
+    this.aiPlayer = cloneDeep(this.aiCopy);
+    this.state = new State(this.frozenTurn); //state holds important turn properties
+    this.newSimTurn = null; //holds gameSim instance
+  }
 
   //start simulated game
   start(){
@@ -38,12 +58,13 @@ class gameSim{
       //1 -- begin turn
       turnNum++;
       //console.log("Simulated Turn #" + turnNum);
-      if(turnNum === 1){ //if its the first turn of the simulated game, the prize must be of the provided state
-        let newTurn = new turnSim(turnNum, this, this.currPrizes, this.simType);
-        newTurn.skipDrawTurn(); //since we already have a prize set, skip draw phase
-      }else{
-        let newTurn = new turnSim(turnNum, this, this.currPrizes, this.simType);
-        newTurn.turn();
+      //turn 1 will either use random winning val or use predicted value if it's provided to gameSim
+      if (turnNum === 1) {
+        this.newSimTurn = new turnSim(turnNum, this, this.currPrizes, this.simType);
+        this.newSimTurn.skipDrawTurn();
+      } else {
+        this.newSimTurn = new turnSim(turnNum, this, this.currPrizes, this.simType);
+        this.newSimTurn.turn();
       }
     }
     console.log("\nSimulated game has ended!");
@@ -62,6 +83,15 @@ class gameSim{
     for(let p of this.playerList){
       if(p != player){
         otherPlayers.push(p.getName());
+      }
+    }return otherPlayers;
+  }
+
+  getOtherPlayers(player){
+    let otherPlayers = [];
+    for(let p of this.playerList){
+      if(p != player){
+        otherPlayers.push(p);
       }
     }return otherPlayers;
   }
