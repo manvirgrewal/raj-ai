@@ -1,5 +1,6 @@
 # raj-ai
 * An adaptive artificial intelligence for Raj The Bidding Game aka Stupide Vautour.
+* See my Final Report pdf for information on what techniques I used for my A.I's implementation 
 * Coded in Javascript.
 * Node.Js
 * Vue.Js GUI coming next
